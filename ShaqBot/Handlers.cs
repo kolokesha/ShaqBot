@@ -1,5 +1,7 @@
-﻿using Telegram.Bot;
+﻿using System.Net.Mime;
+using Telegram.Bot;
 using Telegram.Bot.Exceptions;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -37,32 +39,8 @@ public class Handlers
                         {
                             if (message.Text == "/start")
                             {
-                                // Тут создаем нашу клавиатуру
-                                var inlineKeyboard = new InlineKeyboardMarkup(
-                                    new
-                                        List<InlineKeyboardButton
-                                            []>() // здесь создаем лист (массив), который содрежит в себе массив из класса кнопок
-                                        {
-                                            // Каждый новый массив - это дополнительные строки,
-                                            // а каждая дополнительная строка (кнопка) в массиве - это добавление ряда
-
-                                            new[] // тут создаем массив кнопок
-                                            {
-                                                InlineKeyboardButton.WithUrl("Ссылка на чат",
-                                                    "https://t.me/shakirov_psy"),
-                                                InlineKeyboardButton.WithCallbackData("Тестирование депрессии по Беку", "button1")
-                                            },
-                                            new[]
-                                            {
-                                                InlineKeyboardButton.WithCallbackData("Тут еще одна", "button2"),
-                                                InlineKeyboardButton.WithCallbackData("И здесь", "button3")
-                                            }
-                                        });
-
-                                await botClient.SendTextMessageAsync(
-                                    chat.Id,
-                                    "Это inline клавиатура!",
-                                    replyMarkup: inlineKeyboard); // Все клавиатуры передаются в параметр replyMarkup
+                                var inlineKeyboard = CreateKeyboard(botClient, chat); // Тут создаем нашу клавиатуру
+                                SendMessage(botClient, chat, inlineKeyboard, null); // Все клавиатуры передаются в параметр replyMarkup
 
                                 return;
                             }
@@ -125,17 +103,26 @@ public class Handlers
                             await botClient.SendTextMessageAsync(
                                 chat.Id,
                                 $"Количество депрессии: {CounterOfDepression.DepressionCount}");
+                            var inlineKeyboard = CreateKeyboard(botClient, chat);
+                            SendMessage(botClient, chat, inlineKeyboard, null);
                             return;
                         }
 
                         case "button2":
                         {
                             // А здесь мы добавляем наш сообственный текст, который заменит слово "загрузка", когда мы нажмем на кнопку
-                            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Тут может быть ваш текст!");
+                            Message message = await botClient.SendDocumentAsync(
+                                chatId: chat.Id,
+                                document: InputFile.FromUri("https://github.com/kolokesha/ShaqBot/blob/master/%D0%B3%D0%B0%D0%B8%CC%86%D0%B4_%D0%93%D0%A2%D0%A0.pdf"),
+                                caption: "<b>Друзья, я вам обещал в этом  <a href=\"https://youtu.be/k0Ic__VZAyo?si=v4VF-b2RujRj3SlF\">ролике</a> дать подробный гайд о том, как можно самостоятельно справиться с ГТР (генерализованное тревожное расстройство). \n\nПрикрепляю его и надеюсь, что это будет первым шагом к здоровому состоянию.</b>.",
+                                parseMode: ParseMode.Html,
+                                cancellationToken: cancellationToken);
 
                             await botClient.SendTextMessageAsync(
                                 chat.Id,
                                 $"Вы нажали на {callbackQuery.Data}");
+                            var inlineKeyboard = CreateKeyboard(botClient, chat);
+                            SendMessage(botClient, chat, inlineKeyboard, null);
                             return;
                         }
 
@@ -148,10 +135,11 @@ public class Handlers
                             await botClient.SendTextMessageAsync(
                                 chat.Id,
                                 $"Вы нажали на {callbackQuery.Data}");
+                            var inlineKeyboard = CreateKeyboard(botClient, chat);
+                            SendMessage(botClient, chat, inlineKeyboard, null);
                             return;
                         }
                     }
-
                     return;
                 }
             }
@@ -211,6 +199,38 @@ public class Handlers
         }
     }
 
+    public async void SendMessage(ITelegramBotClient botClient, Chat? chat, InlineKeyboardMarkup? inlineKeyboard, string? text)
+    {
+        await botClient.SendTextMessageAsync(
+            chat.Id,
+            "Всем приветики это ТИМУР ШАКИРОВ БОТ",
+            replyMarkup: inlineKeyboard);
+    }
+    private InlineKeyboardMarkup CreateKeyboard(ITelegramBotClient botClient, Chat? chat)
+    {
+        var inlineKeyboard = new InlineKeyboardMarkup(
+            new
+                List<InlineKeyboardButton
+                    []>() // здесь создаем лист (массив), который содрежит в себе массив из класса кнопок
+                {
+                    // Каждый новый массив - это дополнительные строки,
+                    // а каждая дополнительная строка (кнопка) в массиве - это добавление ряда
+
+                    new[] // тут создаем массив кнопок
+                    {
+                        InlineKeyboardButton.WithUrl("Ссылка на чат",
+                            "https://t.me/shakirov_psy"),
+                        InlineKeyboardButton.WithCallbackData("Тестирование депрессии по Беку", "button1")
+                    },
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData("Гайд ГТР", "button2"),
+                        InlineKeyboardButton.WithCallbackData("И здесь", "button3")
+                    }
+                });
+        
+        return inlineKeyboard;
+    }
     private List<QuestionAnswerPair> AddAnswerPair()
     {
         var questionAnswerList = new List<QuestionAnswerPair>
