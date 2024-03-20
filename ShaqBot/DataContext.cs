@@ -11,4 +11,5 @@ public class DataContext : DbContext
     }
     
     public  DbSet<PollChatMap> PollChatMaps { get; set; }
+    public DbSet<LastMessage> LastMessages { get; set; }
 }
